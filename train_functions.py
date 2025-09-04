@@ -7,6 +7,7 @@ import torch.optim as optim
 import logging
 import wandb
 from omegaconf import DictConfig
+from metrics import calculate_metrics, calculate_iou_metrics
 
 
 def train_one_epoch(
@@ -123,7 +124,7 @@ def validate_with_metrics(model, val_loader, loss_function, device, cfg, log, ep
     
     metrics = {
         'val_loss': avg_val_loss,
-        'mean_iou': mean_iou,
+        'val_iou': mean_iou,
         'mean_precision': avg_precision.mean().item(),
         'mean_recall': avg_recall.mean().item(),
         'mean_f1': avg_f1.mean().item(),

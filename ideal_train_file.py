@@ -21,7 +21,7 @@ from load_functions import (
     get_loss_function,
 )
 from train_functions import train_one_epoch, validate_with_metrics
-from metrics import calculate_metrics, calculate_iou_metrics, evaluate_model, 
+from metrics import calculate_metrics, calculate_iou_metrics, evaluate_model
 
 
 log = logging.getLogger(__name__)
