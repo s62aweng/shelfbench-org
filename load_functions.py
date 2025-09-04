@@ -17,9 +17,6 @@ from typing import Tuple
 def get_data_loaders(cfg: DictConfig) -> Tuple[DataLoader, DataLoader]:
     parent_dir = cfg["data"]["parent_dir"]
 
-    # save the models to gws
-    os.makedirs(cfg["save_dir"], exist_ok=True)
-
     # Load datasets
     train_dataset = IceDataset(mode="train", parent_dir=parent_dir, augment=True)
     val_dataset = IceDataset(mode="val", parent_dir=parent_dir, augment=False)
