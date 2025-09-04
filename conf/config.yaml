@@ -26,11 +26,14 @@ model:
   encoder_weights: "imagenet"
   in_channels: 1
   classes: 2
+  img_size: 256
+  pretrained_path: "/home/users/amorgan/benchmark_CB_AM/models/ViT-L_16.npz"
+
 
 
 # training/default.yaml
 training:
-  batch_size: 4
+  batch_size: 16
   learning_rate: 1e-4
   weight_decay: 1e-4
   epochs: 5000
@@ -43,17 +46,8 @@ training:
   clip_grad_norm: 1.0
   gradient_accumulation_steps: 1
 
-# training/bs8.yaml
-# batch_size: 8
-# learning_rate: 1e-4
-# weight_decay: 1e-4
-# epochs: 50
-# patience: 8
-# class_weight_method: "balanced"
-# mixed_precision: true
-# clip_grad_norm: 1.0
-# gradient_accumulation_steps: 1
 
+#TODO: 
 # data/glacier_seg.yaml
 data:
   img_size: 256
