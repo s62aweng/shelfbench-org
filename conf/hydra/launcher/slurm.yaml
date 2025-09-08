@@ -5,10 +5,10 @@ _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
 submitit_folder: ${hydra.sweep.dir}/.submitit/%j
 exclude: gpuhost013
 timeout_min: 1439
-mem_gb: 40
+mem_gb: 20
 cpus_per_task: 8
 partition: orchid
-gres: gpu:4
+gres: gpu:1
 name: ${name}
 qos: orchid
 additional_parameters:
