@@ -154,3 +154,17 @@ def evaluate_model(model_path, val_loader, device, cfg, log):
     }
 
     return metrics
+
+def calculate_pixel_accuracy(targets, predictions):
+    """
+    Calculate pixel-wise accuracy.
+    Args:
+        targets: Ground truth masks (B, H, W)
+        predictions: Predicted masks (B, H, W)
+    Returns:
+        accuracy: Pixel accuracy as a float
+    """
+    correct_pixels = (targets == predictions).sum().float()
+    total_pixels = targets.numel()
+    accuracy = correct_pixels / total_pixels
+    return accuracy.item()
