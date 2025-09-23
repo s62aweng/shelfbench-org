@@ -43,14 +43,23 @@ benchmark_data_CB
 -- Sentinel-1
 ------ masks
 ------ scenes
+--------- test_s1
+-------------- masks
+-------------- scenes
 -- ERS
 ------ masks
 ------ scenes
 ------ vectors
+--------- test_ERS
+-------------- masks
+-------------- scenes
 -- Envisat
 ------masks
 ------ scenes
 ------ vectors
+--------- test_envisat
+-------------- masks
+-------------- scenes
 """
 
 # all paths
@@ -60,7 +69,8 @@ ERS_dir = os.path.join(parent_dir, "ERS")
 Envisat_dir = os.path.join(parent_dir, "Envisat")
 
 class SatellitePreprocessor:
-    def __init__(self, base_dir, output_dir, patch_size = 256, overlap_train=0, overlap_val =0):
+    def __init__(self, base_dir, output_dir, patch_size = 256, overlap_train=0, overlap_val =0,
+                create_trainval: bool = True, create_test: bool = True):
 
         """ 
         A class to preprocess satellite data for training and validation.
@@ -82,18 +92,27 @@ class SatellitePreprocessor:
             'Envisat': self.base_dir / 'Envisat'
         }
 
-        self._create_output_structure()
+        self._create_output_structure(create_trainval=create_trainval, create_test=create_test)
 
-    def _create_output_structure(self):
+    def _create_output_structure(self,create_trainval: bool = True, create_test: bool = True):
         """
         Create the output directory structure for processed data. 
         Need to create a val dataset from train
+        Updated to match dataloader expectations:
+        - train/val: output_dir/train/images, output_dir/train/masks
+        - test: output_dir/satellite/test_satellite/scenes, output_dir/satellite/test_satellite/masks
+
         """
-        for split in ['train', 'val']:
+        if create_trainval:
+            for split in ['train', 'val']:
+                for data_type in ['images', 'masks']:
+                    output_path = self.output_dir / split / data_type
+                    output_path.mkdir(parents=True, exist_ok=True)
+        if create_test:
             for data_type in ['images', 'masks']:
-                output_path = self.output_dir / split / data_type
-                output_path.mkdir(parents=True, exist_ok=True)
-        
+                test_path = self.output_dir / 'test' / data_type
+                test_path.mkdir(parents=True, exist_ok=True)
+
         (self.output_dir /'data_splits').mkdir(exist_ok=True)
 
         
@@ -304,7 +323,17 @@ class SatellitePreprocessor:
 
                 ########################################################
                 #        Save patches to output directory          #
-                ########################################################
+                #######################################################    
+
+                for i, (img_patch, mask_patch) in enumerate(zip(image_patches, mask_patches)):
+                # choose output directories once (satellite-specific for test)
+                    if split_type == 'test':
+                        img_output_dir = self.output_dir / 'test' / 'images'
+                        mask_output_dir = self.output_dir / 'test' / 'masks'
+                    else:
+                        img_output_dir = self.output_dir / split_type / 'images'
+                        mask_output_dir = self.output_dir / split_type / 'masks'
+
                 base_filename = img_path.stem
 
                 for i, (img_patch, mask_patch) in enumerate(zip(image_patches, mask_patches)):
@@ -328,25 +357,32 @@ class SatellitePreprocessor:
                         continue
                     # Debug: Check patch values after normalization
                     print(f"Patch {i}: Original range [{img_patch.min():.3f}, {img_patch.max():.3f}] -> "
-                      f"Normalized range [{normalised_patch.min()}, {normalised_patch.max()}]")
+                        f"Normalized range [{normalised_patch.min()}, {normalised_patch.max()}]")
 
                     #create a patch name
                     patch_name = f"{base_filename}__{pad_h}_{pad_w}_{i}_{y}_{x}.png"
-
-                    # Save image patch
-                    img_output_path = self.output_dir / split_type / 'images' / patch_name
+                    
+                    img_output_path = img_output_dir / patch_name
                     cv2.imwrite(str(img_output_path), normalised_patch)
                     
                     # Save mask patch
-                    mask_output_path = self.output_dir / split_type / 'masks' / patch_name
+                    mask_output_path = mask_output_dir / patch_name
                     cv2.imwrite(str(mask_output_path), mask_patch)
+
+                    # # Save image patch
+                    # img_output_path = self.output_dir / split_type / 'images' / patch_name
+                    # cv2.imwrite(str(img_output_path), normalised_patch)
+                    
+                    # # Save mask patch
+                    # mask_output_path = self.output_dir / split_type / 'masks' / patch_name
+                    # cv2.imwrite(str(mask_output_path), mask_patch)
                 
                 print(f"✓ Processed {base_filename}: {len(image_patches)} patches")
 
             except Exception as e:
                 print(f"Error processing {img_path}: {str(e)}")
 
-    def _get_file_pairs(self, satellite_dir, mode="test", satellite_name=None):
+    def _get_file_pairs(self, satellite_dir, mode="trainval", satellite_name=None):
         """
         Get paired image and mask files
 
@@ -459,7 +495,7 @@ class SatellitePreprocessor:
             pickle.dump(val_idx, f)
         return train_pairs, val_pairs
     
-    def process_all(self):
+    def process_all(self, process_trainval=True, process_test=True):
         """
         Main processing function
         TODO: Current issue that the train/val split is not 90/10 bc the background check is applied after creating the train test split
@@ -473,6 +509,8 @@ class SatellitePreprocessor:
         print(f"Patch size: {self.patch_size}")
         print(f"Training overlap: {self.overlap_train}")
         print(f"Validation overlap: {self.overlap_val}")
+        print(f"Process train/val: {process_trainval}")
+        print(f"Process test: {process_test}")
         print("=" * 60)
         
         all_threads = []
@@ -487,33 +525,35 @@ class SatellitePreprocessor:
 
             # trainval mode
 
-            file_pairs = self._get_file_pairs(sat_dir, mode="trainval", satellite_name=satellite)
-            if file_pairs:
-                train_pairs, val_pairs = self._create_data_splits(file_pairs)
-                if train_pairs:
-                    t = threading.Thread(
-                        target=self._process_satellite_data,
-                        args=(satellite, "train", train_pairs, self.overlap_train),
-                    )
-                    all_threads.append(t)
-                    t.start()
-                if val_pairs:
-                    t = threading.Thread(
-                        target=self._process_satellite_data,
-                        args=(satellite, "val", val_pairs, self.overlap_val),
-                    )
-                    all_threads.append(t)
-                    t.start()
+            if process_trainval:
+                file_pairs = self._get_file_pairs(sat_dir, mode="trainval", satellite_name=satellite)
+                if file_pairs:
+                    train_pairs, val_pairs = self._create_data_splits(file_pairs)
+                    if train_pairs:
+                        t = threading.Thread(
+                            target=self._process_satellite_data,
+                            args=(satellite, "train", train_pairs, self.overlap_train),
+                        )
+                        all_threads.append(t)
+                        t.start()
+                    if val_pairs:
+                        t = threading.Thread(
+                            target=self._process_satellite_data,
+                            args=(satellite, "val", val_pairs, self.overlap_val),
+                        )
+                        all_threads.append(t)
+                        t.start()
                     
             # test mode
-            test_pairs = self._get_file_pairs(sat_dir, mode="test", satellite_name=satellite)
-            if test_pairs:
-                t = threading.Thread(
-                    target=self._process_satellite_data,
-                    args=(satellite, "test", test_pairs, 0),  # no overlap for test
-                )
-                all_threads.append(t)
-                t.start()
+            if process_test:
+                test_pairs = self._get_file_pairs(sat_dir, mode="test", satellite_name=satellite)
+                if test_pairs:
+                    t = threading.Thread(
+                        target=self._process_satellite_data,
+                        args=(satellite, "test", test_pairs, 0),  # no overlap for test
+                    )
+                    all_threads.append(t)
+                    t.start()
             
         for thread in all_threads:
             thread.join()
@@ -537,6 +577,14 @@ class SatellitePreprocessor:
                 img_count = len(list(img_dir.glob('*.png')))
                 mask_count = len(list(mask_dir.glob('*.png')))
                 print(f"{split.capitalize()} images: {img_count}, masks: {mask_count}")
+                
+        scenes_dir = self.output_dir / 'test' / 'images'
+        masks_dir  = self.output_dir / 'test' / 'masks'
+        if scenes_dir.exists():
+            scene_count = len(list(scenes_dir.glob('*.png')))
+            mask_count  = len(list(masks_dir.glob('*.png')))
+            print(f"Test images: {scene_count}, masks: {mask_count}")
+
 
 #Main configuration 
 if __name__ == "__main__":
@@ -552,7 +600,11 @@ if __name__ == "__main__":
         output_dir=OUTPUT_DIR,
         patch_size=PATCH_SIZE,
         overlap_train=OVERLAP_TRAIN,
-        overlap_val=OVERLAP_VAL
+        overlap_val=OVERLAP_VAL,
+        create_trainval=False,   # important
+        create_test=True
     )
     
-    preprocessor.process_all()
+    #preprocessor.process_all()
+    # choose what to preprocess 
+    preprocessor.process_all(process_trainval=False, process_test=True)

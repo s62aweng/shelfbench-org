@@ -11,30 +11,51 @@ import albumentations as A
 
 
 class IceDataset(Dataset):
-    """ "
+    """
 
-    This class loads a dataset of SAR images and their corresponding masks produced by C. Baumhoer.
+    This class loads a dataset of preprocessed SAR images and their corresponding masks produced by C. Baumhoer.
 
     Args:
         - mode (str): 'train', 'val', or 'test'
-        - parent_dir (str): Root directory containing 'images', 'masks' folders.
+        - parent_dir (str): Root directory containing 'scenes', 'masks' folders.
         - augment: whether to apply data augmentation (true for train, false for val/test)
+        
+    Adapt this to take into account the different structure of the test data:
+        - train/val: /parent_dir/train/scenes, /parent_dir/train/masks
+        - test: /parent_dir/satellite/test_satellite/scenes, /parent_dir/satellite/test_satellite/masks
+         
     """
 
-    def __init__(self, mode, parent_dir, augment=True, batch_size: int = 16):
+    def __init__(self, mode, parent_dir, satellite=None, augment=True):
         print(f"Initializing IceDataset in {mode} mode...")
 
         self.mode = mode
         self.parent_dir = parent_dir
+        self.satellite = satellite
 
         if augment is None:
             self.augment = mode == "train"
         else:
             self.augment = augment
 
-        self.image_dir = os.path.join(parent_dir, mode, "images")
-        self.mask_dir = os.path.join(parent_dir, mode, "masks")
+        if mode == "test":
+            self.image_dir = os.path.join(parent_dir, "preprocessed_data", "test", "images")
+            self.mask_dir = os.path.join(parent_dir, "preprocessed_data", "test", "masks")
 
+        else:
+            # train/val
+            self.image_dir = os.path.join(parent_dir, mode, "images")
+            self.mask_dir = os.path.join(parent_dir, mode, "masks")
+            
+        # Verify directories exist
+        if not os.path.exists(self.image_dir):
+            raise ValueError(f"Image directory does not exist: {self.image_dir}")
+        if not os.path.exists(self.mask_dir):
+            raise ValueError(f"Mask directory does not exist: {self.mask_dir}")
+
+
+
+        # this only works on preprocessed images 
         # Get all image files (lazy loading - just get count and verify structure)
         self.image_files = sorted(
             [f for f in os.listdir(self.image_dir) if f.endswith((".png"))]
@@ -44,6 +65,7 @@ class IceDataset(Dataset):
         )
 
         print(f"Found {len(self.image_files)} images and {len(self.mask_files)} masks")
+        print(f"{mode} {satellite or ''}: {len(self.image_files)} samples")
 
         if len(self.image_files) != len(self.mask_files):
             print(
@@ -125,3 +147,81 @@ class IceDataset(Dataset):
         mask_tensor = torch.from_numpy(mask_transformed).float().unsqueeze(0)
 
         return image_tensor, mask_tensor
+    
+    
+    #debug
+    @staticmethod
+    def create_test_datasets(parent_dir):
+        """
+        Create test dataset from the unified test directory
+        Since all test data is now in one location, we create a single dataset
+        """
+        # Debug: Print expected path structure
+        expected_test_dir = os.path.join(parent_dir, "preprocessed_data", "test")
+        expected_images_dir = os.path.join(expected_test_dir, "images")
+        expected_masks_dir = os.path.join(expected_test_dir, "masks")
+        
+        print(f"Debug: Looking for test data at:")
+        print(f"  Images: {expected_images_dir}")
+        print(f"  Masks: {expected_masks_dir}")
+        print(f"  Images exists: {os.path.exists(expected_images_dir)}")
+        print(f"  Masks exists: {os.path.exists(expected_masks_dir)}")
+        
+        if os.path.exists(expected_images_dir):
+            image_files = os.listdir(expected_images_dir)
+            png_files = [f for f in image_files if f.endswith('.png')]
+            print(f"  All files in images: {len(image_files)}")
+            print(f"  PNG files in images: {len(png_files)}")
+            if len(image_files) > 0:
+                print(f"  Sample files: {image_files[:5]}")
+                
+        if os.path.exists(expected_masks_dir):
+            mask_files = os.listdir(expected_masks_dir)
+            png_mask_files = [f for f in mask_files if f.endswith('.png')]
+            print(f"  All files in masks: {len(mask_files)}")
+            print(f"  PNG files in masks: {len(png_mask_files)}")
+        
+        test_datasets = {}
+        
+        try:
+            # Create a single test dataset
+            print("Creating test dataset...")
+            test_dataset = IceDataset('test', parent_dir, satellite=None, augment=False)
+            
+            # Only create satellite references if the dataset has data
+            if len(test_dataset) > 0:
+                satellites = ['ERS', 'Envisat', 'Sentinel-1']
+                for satellite in satellites:
+                    test_datasets[satellite] = test_dataset
+                print(f"Successfully created test dataset with {len(test_dataset)} samples")
+            else:
+                print("Warning: Test dataset is empty")
+                
+        except Exception as e:
+            print(f"Could not load test dataset: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        return test_datasets
+    
+    # @staticmethod
+    # def create_test_datasets(parent_dir):
+    #     """
+    #     Create only test datasets
+    #     """
+    #     test_datasets = {}
+        
+    #     try:
+    #         # Create a single test dataset since all satellites are combined
+    #         test_dataset = IceDataset('test', parent_dir, satellite=None, augment=False)
+            
+    #         # For compatibility with existing code that expects satellite-specific datasets,
+    #         # we can create the same dataset reference for each satellite name
+    #         satellites = ['ERS', 'Envisat', 'Sentinel-1']
+    #         for satellite in satellites:
+    #             test_datasets[satellite] = test_dataset
+                
+    #     except Exception as e:
+    #         print(f"Could not load test dataset: {e}")
+        
+    #     return test_datasets

@@ -83,7 +83,13 @@ def validate_with_metrics(
             images = images.to(device)
             masks = masks.to(device)
             # same as in train_one_epoch
-            masks = 1 - (masks / 255)
+            
+            # this inverts the masks i.e label and image are opposite
+            #masks = 1 - (masks / 255)
+            
+            # not inverted ! updated from 10.9.25
+            masks = masks / 255
+            
             one_hot_masks = (
                 F.one_hot(masks.long(), num_classes=2).squeeze(1).permute(0, 3, 1, 2)
             )
