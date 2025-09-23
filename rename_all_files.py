@@ -233,11 +233,27 @@ def rename_everything(base_dir: str,
     with open(log_csv, "w", newline="") as f:
         w = csv.writer(f); w.writerow(["from","to"]); w.writerows([(str(a), str(b)) for a,b in plan])
     print(f"Done. Log saved: {log_csv}")
+    
+    
+import csv, os
+plan = [row for row in csv.reader(open("final_plan.csv")) if "Sentinel-1" in row[0] or "Sentinel-1" in row[1]]
+for src,dst in plan:
+    if not os.path.exists(src):
+        print("MISSING SRC:", src); continue
+    base, suf = os.path.splitext(dst)
+    final = dst
+    i = 1
+    while os.path.exists(final):
+        final = f"{base}_dup{i}{suf}"; i+=1
+    os.rename(src, final)
+    print("Renamed:", src, "->", final)
 
-# --- example usage -------------------------------------------------------
 if __name__ == "__main__":
     base = "/gws/nopw/j04/iecdt/amorgan/benchmark_data_CB/ICE-BENCH"
-    # First: preview
-    rename_everything(base, dry_run=True, resolve_conflicts="suffix", plan_csv="dry_run_plan.csv")
-    # Then: actually do it
-    # rename_everything(base, dry_run=False, resolve_conflicts="suffix")
+    rename_everything(
+        base,
+        dry_run=False,
+        resolve_conflicts="abort",   # safest now that the plan is clean
+        plan_csv="final_plan.csv",
+        log_csv="executed_log.csv",
+    )
