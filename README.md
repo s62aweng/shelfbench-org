@@ -5,7 +5,7 @@
 ### File structure:
 Dataset:
 
-gws/nopw/j04/iecdt/amorgan/benchmark_CB_AM/
+ICE-BENCH
 
 ------ Envisat
 
@@ -13,7 +13,7 @@ gws/nopw/j04/iecdt/amorgan/benchmark_CB_AM/
 
 ------------ masks
 
------------- vectors
+------------ test_envisat
 
 ------ ERS
 
@@ -21,7 +21,7 @@ gws/nopw/j04/iecdt/amorgan/benchmark_CB_AM/
 
 ------------ masks
 
------------- vectors
+------------ test_ERS
 
 ------ Sentinel-1
 
@@ -29,6 +29,14 @@ gws/nopw/j04/iecdt/amorgan/benchmark_CB_AM/
 
 ------------ masks
 
-81 Sentinel-1 scenes and masks
-33 ERS scenes, masks and vectors
-4 Envisat scenes, masks and vectors
+------------ test_s1
+
+
+### Using latex on jasmin
+Install script install-texlive.sh
+
+Run: bash install-texlive.sh
+
+Then:
+export PATH="$HOME/texlive/$(date +%Y)/bin/$(ls $HOME/texlive/$(date +%Y)/bin | head -n1):$PATH"
+
