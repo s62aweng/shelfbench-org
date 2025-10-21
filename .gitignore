@@ -14,3 +14,6 @@ archive/
 dinov3_vitl16_pretrain_sat493m-eadcf0ff.pth
 ViT-L_16.npz
 mde_results_filtered/
+train_notebook.ipynb
+visualise_data.ipynb
+archive/
