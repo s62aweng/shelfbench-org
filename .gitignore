@@ -17,3 +17,8 @@ mde_results_filtered/
 train_notebook.ipynb
 visualise_data.ipynb
 archive/
+filtered_ice_front_visualizations/
+MDE_visualisation.ipynb
+new_test_plot_code.ipynb
+MDE_final_fig.ipynb
+plot_all_models.ipynb

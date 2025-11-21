@@ -11,20 +11,6 @@ import albumentations as A
 
 
 class IceDataset(Dataset):
-    """
-
-    This class loads a dataset of preprocessed SAR images and their corresponding masks produced by C. Baumhoer.
-
-    Args:
-        - mode (str): 'train', 'val', or 'test'
-        - parent_dir (str): Root directory containing 'scenes', 'masks' folders.
-        - augment: whether to apply data augmentation (true for train, false for val/test)
-        
-    Adapt this to take into account the different structure of the test data:
-        - train/val: /parent_dir/train/scenes, /parent_dir/train/masks
-        - test: /parent_dir/satellite/test_satellite/scenes, /parent_dir/satellite/test_satellite/masks
-         
-    """
 
     def __init__(self, mode, parent_dir, satellite=None, augment=True):
         print(f"Initializing IceDataset in {mode} mode...")
@@ -96,9 +82,7 @@ class IceDataset(Dataset):
         else:
             # No transforms for validation
             self.transform = A.Compose([])
-
-        # TODO: Check this
-        # Separate normalization for image only (after joint transformations)
+            
         self.normalize = A.Normalize(mean=0.3047126829624176, std=0.32187142968177795)
 
     def __len__(self):
