@@ -23,7 +23,7 @@ def set_seed(seed=42):
 def init_wandb(cfg: DictConfig):
     if wandb.run is None:
         wandb.init(
-            project="ICE-BENCH", # old name - change to Shelf-BENCH
+            project="Shelf-Bench", 
             # name="trial_initial_runs",
             entity="amy-morgan-university-of-oxford", #change to your wandb username
             settings=wandb.Settings(start_method="thread"),
@@ -58,7 +58,6 @@ def save_model(
     val_loss: float,
     val_iou: float,
     cfg: DictConfig,
-    log: logging.Logger,
 ):
     # Save model checkpoint with more information
     torch.save(
@@ -67,8 +66,8 @@ def save_model(
             "model_state_dict": model.state_dict(),
             "optimizer_state_dict": optimizer.state_dict(),
             "scheduler_state_dict": (scheduler.state_dict() if scheduler else None),
-            "val_loss": val_loss,
-            "val_iou": val_iou,
+            "best_val_loss": val_loss,
+            "best_val_iou": val_iou,
             "config": cfg,
         },
         path,

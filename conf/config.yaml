@@ -15,7 +15,7 @@ name: "ice_bench_seg"
 save_dir: "/gws/nopw/j04/iecdt/amorgan/benchmark_data_CB/model_outputs/"
 data_root: "/gws/nopw/j04/iecdt/amorgan/benchmark_data_CB/preprocessed_data/train/images"
 load_path: true
-use_wandb: false
+use_wandb: true
 class_names: ["Ocean", "Ice"]
 log_freq: 200
 save_freq: 1

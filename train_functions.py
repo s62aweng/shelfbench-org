@@ -31,7 +31,7 @@ def train_one_epoch(
         image = image.to(device)
         mask = mask.to(device)
 
-        mask = 1 - (mask / 255)
+        mask = mask / 255
         mask = F.one_hot(mask.long(), num_classes=2).squeeze(1).permute(0, 3, 1, 2)
 
         optimizer.zero_grad()
@@ -88,7 +88,7 @@ def validate_with_metrics(
             masks = masks.to(device)
 
             masks = masks / 255
-            
+
             one_hot_masks = (
                 F.one_hot(masks.long(), num_classes=2).squeeze(1).permute(0, 3, 1, 2)
             )
