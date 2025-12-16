@@ -58,6 +58,7 @@ def save_model(
     val_loss: float,
     val_iou: float,
     cfg: DictConfig,
+    log: logging.Logger,
 ):
     # Save model checkpoint with more information
     torch.save(
