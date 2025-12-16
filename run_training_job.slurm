@@ -61,8 +61,8 @@ python -c "import rasterio; print('Rasterio version:', rasterio.__version__)"
 # Training starten UNet
 python "$PROJECT_DIR/ideal_train_file.py" \
     --config-path "$PROJECT_DIR/conf" \
-    --config-name config_unet \
-    model.name=Unet \
+    --config-name config \
+    #model.name=Unet \
     training.loss_function=CombinedLoss
 
 
