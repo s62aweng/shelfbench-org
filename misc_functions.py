@@ -23,9 +23,9 @@ def set_seed(seed=42):
 def init_wandb(cfg: DictConfig):
     if wandb.run is None:
         wandb.init(
-            project="Shelf-Bench", 
+            project="Shelf-BENCH_org", # old name - change to Shelf-BENCH
             # name="trial_initial_runs",
-            entity="amy-morgan-university-of-oxford", #change to your wandb username
+            entity="uni-bonn-de", #change to your wandb username
             settings=wandb.Settings(start_method="thread"),
             job_type="training",
             save_code=False,
