@@ -6,11 +6,11 @@ Loading function for Shelf-BENCH: trainloader, valloader, models loaded, optimis
 
 import os
 import torch
+import torch.nn as nn
+import torch.optim as optim
 from torch.utils.data import DataLoader
 import segmentation_models_pytorch as smp
 from data_processing.ice_data import IceDataset
-import torch.nn as nn
-import torch.optim as optim
 from monai.losses import DiceLoss, DiceCELoss, FocalLoss
 from combined_loss import CombinedLoss
 from models.ViT import create_vit_large_16
