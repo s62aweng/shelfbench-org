@@ -86,10 +86,8 @@ class IceDataset(Dataset):
         else:
             # No transforms for validation
             self.transform = A.Compose([])
-
-        #self-computed values from provided png-dataset: Dataset mean: 0.474830, std: 0.246727
-        self.normalize = A.Normalize(mean=0.474830, std=0.246727)
-        #self.normalize = A.Normalize(mean=0.3047126829624176, std=0.32187142968177795)
+    
+        self.normalize = A.Normalize(mean=0.3047126829624176, std=0.32187142968177795)
 
     def __len__(self):
         """
